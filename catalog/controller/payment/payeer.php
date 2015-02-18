@@ -20,6 +20,7 @@ class ControllerPaymentPayeer extends Controller
 		$m_key = $this->config->get('payeer_security');
 		$data['m_orderid'] = $order_id;
 		$data['m_amount'] = $this->currency->format($order_info['total'], $order_info['currency_code'], $order_info['currency_value'], false);
+		$data['m_amount'] = number_format($data['m_amount'], 2, '.', '');
 		
 		$data['m_curr'] = strtoupper($order_info['currency_code']);
 		
