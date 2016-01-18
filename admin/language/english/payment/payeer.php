@@ -1,39 +1,39 @@
 <?php
 // Heading
-$_['heading_title'] 		= 'Payment system Payeer';
+$_['heading_title'] = 'Payeer';
 
 // Text 
-$_['text_payment'] 			= 'Payment';
-$_['text_success'] 			= 'Settings module updated!';
-$_['text_edit'] 			= 'Edit';
-$_['text_payeer'] 			= '<a onclick="window.open(\'https://www.payeer.com\');"><img src="view/image/payment/payeer.png" alt="Payeer" title="Payeer" /></a>';
+$_['text_enabled'] = 'Enabled';
+$_['text_disabled'] = 'Disabled';
+$_['text_payment'] = 'Payment';
+$_['text_edit'] = 'Payeer module change';
+$_['text_success'] = 'Settings module updated!';
+$_['text_payeer'] = '<a target="_blank" href="https://www.payeer.com"><img src="view/image/payment/payeer.png" alt="Payeer" title="Payeer" /></a>';
 
 // Entry
-$_['entry_url'] 			= 'URL of the merchant';
-$_['entry_merchant'] 		= 'store ID';
-$_['entry_security'] 		= 'Secret key';
-$_['entry_order_status']	= 'the status of the order after payment';
-$_['entry_geo_zone'] 		= 'Geographical area';
-$_['entry_status']	 		= 'Status';
-$_['entry_sort_order'] 		= 'sort Order';
-$_['entry_log'] 			= 'Path to file-log';
-$_['entry_order_desc'] 		= 'Comment for payment';
-$_['entry_list_ip'] 		= 'IP';
-$_['entry_admin_email'] 	= 'E-mail to alert error';
+$_['entry_url'] = 'URL merchant';
+$_['entry_merchant'] = 'ID shop';
+$_['entry_security'] = 'Secret key';
+$_['entry_geo_zone'] = 'Geo zone';
+$_['entry_status'] = 'Status';
+$_['entry_order_wait'] = 'Status of waiting for payment';
+$_['entry_order_success'] = 'Status successful payment';
+$_['entry_order_fail'] = 'Status fail payment';
+$_['entry_sort_order'] = 'Sorting order';
+$_['entry_log'] = 'The path to the transaction log';
+$_['entry_list_ip'] = 'IP Filter incoming requests';
+$_['entry_admin_email'] = 'E-mail alert for Error';
 
-//Help
-$_['entry_url_help'] 		= 'the URL for payment in the system Payeer (the default //payeer.com/merchant/)';
-$_['entry_merchant_help'] 	= 'store ID registered in the system PAYEER. It can be found in Payeer account: Account -> My store -> Edit. Example: 01234567';
-$_['entry_security_help'] 	= 'Secret key notification of payment that is used to verify the integrity of the received information and the unique identification of the sender. Must be the same secret key specified in the Payeer account: Account -> My store -> Edit. Example: 1234567';
-$_['entry_order_status_help'] = 'order Status after successful payment';
-$_['entry_status_help'] 	= 'Activate / Deactivate the module Payeer';
-$_['entry_sort_order_help'] = 'the smaller the number the higher the priority among other payment methods';
-$_['entry_log_help'] 		= 'Path to file to log payments through Payeer (for example, /payeer_orders.log). If a path is not specified, the log is not written';
-$_['entry_order_desc_help'] = 'an explanation of the payment order';
-$_['entry_list_ip_help'] 	= 'a comma-separated List of trusted IP addresses of the payment processor. You can specify the mask.';
+// Help
+$_['help_url'] = 'URL for the payment system Payeer';
+$_['help_merchant'] = 'Store identifier registered in the payment system Payeer';
+$_['help_security'] = 'The secret key warning on the implementation of payment , which is used to verify the integrity of the information received and unambiguous identification of the sender. It must match with a secret key that is specified in your account Payeer';
+$_['help_log'] = 'The path to the file , where it will be stored in the entire history of payment Payeer';
+$_['help_list_ip'] = 'List of Trusted IP supporting the mask ( for example : 123.456.78.90, 123.456. *. *)';
+$_['help_admin_email'] = 'E-mail administrator for error reporting payment';
 
 // Error
-$_['error_permission'] 		= 'You Have no rights to control this module!';
-$_['error_merchant'] 		= 'you Must specify the ID of the store!';
-$_['error_security'] 		= 'you Must specify the secret code!';
-?>
+$_['error_permission'] = 'You are not allowed to control this unit!';
+$_['error_url'] = 'URL merchant is required!';
+$_['error_merchant'] = 'You must specify the ID of the store!';
+$_['error_security'] = 'You must specify the secret code!';
