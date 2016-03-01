@@ -54,7 +54,40 @@ class ControllerPaymentPayeer extends Controller
 				$_POST['m_desc'],
 				$_POST['m_status'],
 				$m_key);
+				
 			$sign_hash = strtoupper(hash('sha256', implode(":", $arHash)));
+			
+			$this->load->language('payment/payeer');
+			
+			if ($_POST["m_sign"] != $sign_hash)
+			{
+				$to_email = $this->config->get('payeer_admin_email');
+				
+				if (!empty($to_email))
+				{
+					$subject = $this->language->get('text_email_subject');
+					$message = $this->language->get('text_email_message1') . "\n\n" .
+						$this->language->get('text_email_message2') . "\n\n" .
+						$log_text;
+
+					$mail = new Mail();
+					$mail->protocol = $this->config->get('config_mail_protocol');
+					$mail->parameter = $this->config->get('config_mail_parameter');
+					$mail->smtp_hostname = $this->config->get('config_mail_smtp_hostname');
+					$mail->smtp_username = $this->config->get('config_mail_smtp_username');
+					$mail->smtp_password = html_entity_decode($this->config->get('config_mail_smtp_password'), ENT_QUOTES, 'UTF-8');
+					$mail->smtp_port = $this->config->get('config_mail_smtp_port');
+					$mail->smtp_timeout = $this->config->get('config_mail_smtp_timeout');
+					$mail->setTo($to_email);
+					$mail->setFrom($this->config->get('config_email'));
+					$mail->setSender($_SERVER['HTTP_SERVER']);
+					$mail->setSubject(html_entity_decode($subject, ENT_QUOTES, 'UTF-8'));
+					$mail->setText($message);
+					$mail->send();
+				}
+				
+				exit($_POST['m_orderid'] . '|error');
+			}
 			
 			// проверка принадлежности ip списку доверенных ip
 			
@@ -108,38 +141,6 @@ class ControllerPaymentPayeer extends Controller
 				file_put_contents($_SERVER['DOCUMENT_ROOT'] . $this->config->get('payeer_log_value'), $log_text, FILE_APPEND);
 			}
 			
-			$this->load->language('payment/payeer');
-			
-			if ($_POST["m_sign"] != $sign_hash)
-			{
-				$to_email = $this->config->get('payeer_admin_email');
-				
-				if (!empty($to_email))
-				{
-					$subject = $this->language->get('text_email_subject');
-					$message = $this->language->get('text_email_message1') . "\n\n" .
-						$this->language->get('text_email_message2') . "\n\n" .
-						$log_text;
-
-					$mail = new Mail();
-					$mail->protocol = $this->config->get('config_mail_protocol');
-					$mail->parameter = $this->config->get('config_mail_parameter');
-					$mail->smtp_hostname = $this->config->get('config_mail_smtp_hostname');
-					$mail->smtp_username = $this->config->get('config_mail_smtp_username');
-					$mail->smtp_password = html_entity_decode($this->config->get('config_mail_smtp_password'), ENT_QUOTES, 'UTF-8');
-					$mail->smtp_port = $this->config->get('config_mail_smtp_port');
-					$mail->smtp_timeout = $this->config->get('config_mail_smtp_timeout');
-					$mail->setTo(to_email);
-					$mail->setFrom($this->config->get('config_email'));
-					$mail->setSender($_SERVER['HTTP_SERVER']);
-					$mail->setSubject(html_entity_decode($subject, ENT_QUOTES, 'UTF-8'));
-					$mail->setText($message);
-					$mail->send();
-				}
-				
-				exit($_POST['m_orderid'] . '|error');
-			}
-				
 			$this->load->model('checkout/order');
 			$order_info = $this->model_checkout_order->getOrder($_POST['m_orderid']);
 			if (!$order_info) return;
