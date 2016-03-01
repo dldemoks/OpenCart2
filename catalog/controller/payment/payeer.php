@@ -108,15 +108,44 @@ class ControllerPaymentPayeer extends Controller
 				file_put_contents($_SERVER['DOCUMENT_ROOT'] . $this->config->get('payeer_log_value'), $log_text, FILE_APPEND);
 			}
 			
+			$this->load->language('payment/payeer');
+			
+			if ($_POST["m_sign"] != $sign_hash)
+			{
+				$to_email = $this->config->get('payeer_admin_email');
+				
+				if (!empty($to_email))
+				{
+					$subject = $this->language->get('text_email_subject');
+					$message = $this->language->get('text_email_message1') . "\n\n" .
+						$this->language->get('text_email_message2') . "\n\n" .
+						$log_text;
+
+					$mail = new Mail();
+					$mail->protocol = $this->config->get('config_mail_protocol');
+					$mail->parameter = $this->config->get('config_mail_parameter');
+					$mail->smtp_hostname = $this->config->get('config_mail_smtp_hostname');
+					$mail->smtp_username = $this->config->get('config_mail_smtp_username');
+					$mail->smtp_password = html_entity_decode($this->config->get('config_mail_smtp_password'), ENT_QUOTES, 'UTF-8');
+					$mail->smtp_port = $this->config->get('config_mail_smtp_port');
+					$mail->smtp_timeout = $this->config->get('config_mail_smtp_timeout');
+					$mail->setTo(to_email);
+					$mail->setFrom($this->config->get('config_email'));
+					$mail->setSender($_SERVER['HTTP_SERVER']);
+					$mail->setSubject(html_entity_decode($subject, ENT_QUOTES, 'UTF-8'));
+					$mail->setText($message);
+					$mail->send();
+				}
+				
+				exit($_POST['m_orderid'] . '|error');
+			}
+				
 			$this->load->model('checkout/order');
 			$order_info = $this->model_checkout_order->getOrder($_POST['m_orderid']);
 			if (!$order_info) return;
 				
-			// проверка цифровой подписи и ip сервера
-			
 			if ($order_info['order_status_id'] != $this->config->get('payeer_order_success_id')
-				&& $_POST['m_status'] == 'success'
-				&& $_POST['m_sign'] == $sign_hash  
+				&& $_POST['m_status'] == 'success' 
 				&& $valid_ip)
 			{
 				$this->model_checkout_order->addOrderHistory($_POST['m_orderid'], $this->config->get('payeer_order_success_id'));
@@ -124,49 +153,45 @@ class ControllerPaymentPayeer extends Controller
 			}
 			elseif ($order_info['order_status_id'] != $this->config->get('payeer_order_fail_id'))
 			{
-				$this->load->language('payment/payeer');
-				
 				$subject = $this->language->get('text_email_subject');
 				$message = $this->language->get('text_email_message1') . "\n\n";
+				$to_email = $this->config->get('payeer_admin_email');
 				
-				if ($_POST["m_sign"] != $sign_hash)
+				if (!empty($to_email))
 				{
-					$message.= $this->language->get('text_email_message2') . "\n";
+					if ($_POST['m_status'] != "success")
+					{
+						$message .= $this->language->get('text_email_message3') . "\n";
+					}
+					
+					if (!$valid_ip)
+					{
+						$message .= $this->language->get('text_email_message4') . "\n";
+						$message .= $this->language->get('text_email_message5') . $this->config->get('payeer_list_ip') . "\n";
+						$message .= $this->language->get('text_email_message6') . $_SERVER['REMOTE_ADDR'] . "\n";
+					}
+					
+					$message .= "\n" . $log_text;
+					$this->model_checkout_order->addOrderHistory($_POST['m_orderid'], $this->config->get('payeer_order_fail_id'));
+					
+					$mail = new Mail();
+					$mail->protocol = $this->config->get('config_mail_protocol');
+					$mail->parameter = $this->config->get('config_mail_parameter');
+					$mail->smtp_hostname = $this->config->get('config_mail_smtp_hostname');
+					$mail->smtp_username = $this->config->get('config_mail_smtp_username');
+					$mail->smtp_password = html_entity_decode($this->config->get('config_mail_smtp_password'), ENT_QUOTES, 'UTF-8');
+					$mail->smtp_port = $this->config->get('config_mail_smtp_port');
+					$mail->smtp_timeout = $this->config->get('config_mail_smtp_timeout');
+					$mail->setTo($this->config->get('payeer_admin_email'));
+					$mail->setFrom($to_email);
+					$mail->setSender(html_entity_decode($order_info['store_name'], ENT_QUOTES, 'UTF-8'));
+					$mail->setSubject(html_entity_decode($subject, ENT_QUOTES, 'UTF-8'));
+					$mail->setText($message);
+					$mail->send();
 				}
-				
-				if ($_POST['m_status'] != "success")
-				{
-					$message .= $this->language->get('text_email_message3') . "\n";
-				}
-				
-				if (!$valid_ip)
-				{
-					$message .= $this->language->get('text_email_message4') . "\n";
-					$message .= $this->language->get('text_email_message5') . $this->config->get('payeer_list_ip') . "\n";
-					$message .= $this->language->get('text_email_message6') . $_SERVER['REMOTE_ADDR'] . "\n";
-				}
-				
-				$message .= "\n" . $log_text;
-				$this->model_checkout_order->addOrderHistory($_POST['m_orderid'], $this->config->get('payeer_order_fail_id'));
-				
-				$mail = new Mail();
-				$mail->protocol = $this->config->get('config_mail_protocol');
-				$mail->parameter = $this->config->get('config_mail_parameter');
-				$mail->smtp_hostname = $this->config->get('config_mail_smtp_hostname');
-				$mail->smtp_username = $this->config->get('config_mail_smtp_username');
-				$mail->smtp_password = html_entity_decode($this->config->get('config_mail_smtp_password'), ENT_QUOTES, 'UTF-8');
-				$mail->smtp_port = $this->config->get('config_mail_smtp_port');
-				$mail->smtp_timeout = $this->config->get('config_mail_smtp_timeout');
-				$mail->setTo($this->config->get('payeer_admin_email'));
-				$mail->setFrom($this->config->get('config_email'));
-				$mail->setSender(html_entity_decode($order_info['store_name'], ENT_QUOTES, 'UTF-8'));
-				$mail->setSubject(html_entity_decode($subject, ENT_QUOTES, 'UTF-8'));
-				$mail->setText($message);
-				$mail->send();
 				
 				echo $_POST['m_orderid'] . '|error';
 			}
-			exit;
 		}
    	}
 
