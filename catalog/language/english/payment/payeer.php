@@ -8,3 +8,5 @@ $_['text_email_message3'] = ' - The payment status is not success';
 $_['text_email_message4'] = ' - the ip address of the server is not trusted';
 $_['text_email_message5'] = '   trusted ip: ';
 $_['text_email_message6'] = '   ip of the current server: ';
+$_['text_email_message7'] = ' - Wrong amount';
+$_['text_email_message8'] = ' - Wrong currency';
