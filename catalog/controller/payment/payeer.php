@@ -39,11 +39,12 @@ class ControllerPaymentPayeer extends Controller
 
 	public function status()
 	{
+		$request = $this->request->post;
+		
 		if (isset($request["m_operation_id"]) && isset($request["m_sign"]))
 		{
 			$err = false;
 			$message = '';
-			$request = $this->request->post;
 			$this->load->language('payment/payeer');
 		
 			// запись логов
