@@ -85,27 +85,17 @@ class ControllerPaymentPayeer extends Controller
 			))));
 			
 			$valid_ip = true;
-			$list_ip_str = str_replace(' ', '', $this->config->get('payeer_list_ip'));
+			$sIP = str_replace(' ', '', $this->config->get('payeer_list_ip'));
 			
-			if (!empty($list_ip_str)) 
+			if (!empty($sIP))
 			{
-				$i = 0;
-				$list_ip = explode(',', $list_ip_str);
-				$this_ip_field = explode('.', $_SERVER['REMOTE_ADDR']);
-				$list_ip_field = array();
-				$valid_ip = false;
-				foreach ($list_ip as $ip)
+				$arrIP = explode('.', $_SERVER['REMOTE_ADDR']);
+				if (!preg_match('/(^|,)(' . $arrIP[0] . '|\*{1})(\.)' .
+				'(' . $arrIP[1] . '|\*{1})(\.)' .
+				'(' . $arrIP[2] . '|\*{1})(\.)' .
+				'(' . $arrIP[3] . '|\*{1})($|,)/', $sIP))
 				{
-					$ip_field[$i] = explode('.', $ip);
-					if ((($this_ip_field[0] ==  $ip_field[$i][0]) || ($ip_field[$i][0] == '*')) &&
-					(($this_ip_field[1] ==  $ip_field[$i][1]) || ($ip_field[$i][1] == '*')) &&
-					(($this_ip_field[2] ==  $ip_field[$i][2]) || ($ip_field[$i][2] == '*')) &&
-					(($this_ip_field[3] ==  $ip_field[$i][3]) || ($ip_field[$i][3] == '*')))
-					{
-						$valid_ip = true;
-						break;
-					}
-					$i++;
+					$valid_ip = false;
 				}
 			}
 			
