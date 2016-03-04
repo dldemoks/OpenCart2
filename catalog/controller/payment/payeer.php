@@ -104,7 +104,7 @@ class ControllerPaymentPayeer extends Controller
 			if (!$valid_ip)
 			{
 				$message .= $this->language->get('text_email_message4') . "\n" . 
-				$this->language->get('text_email_message5') . $this->config->get('payeer_list_ip') . "\n" . 
+				$this->language->get('text_email_message5') . $sIP . "\n" . 
 				$this->language->get('text_email_message6') . $_SERVER['REMOTE_ADDR'] . "\n";
 				$err = true;
 			}
