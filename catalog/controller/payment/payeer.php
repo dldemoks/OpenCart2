@@ -63,9 +63,11 @@ class ControllerPaymentPayeer extends Controller
 				"status				" . $request['m_status'] . "\n" .
 				"sign				" . $request['m_sign'] . "\n\n";
 			
-			if ($this->config->get('payeer_log_value') !== '')
+			$log_file = $this->config->get('payeer_log_value');
+			
+			if (!empty($log_file))
 			{
-				file_put_contents($_SERVER['DOCUMENT_ROOT'] . $this->config->get('payeer_log_value'), $log_text, FILE_APPEND);
+				file_put_contents($_SERVER['DOCUMENT_ROOT'] . $log_file, $log_text, FILE_APPEND);
 			}
 
 			// проверка цифровой подписи и ip
