@@ -10,3 +10,4 @@ $_['text_email_message5'] = '   trusted ip: ';
 $_['text_email_message6'] = '   ip of the current server: ';
 $_['text_email_message7'] = ' - Wrong amount';
 $_['text_email_message8'] = ' - Wrong currency';
+$_['text_email_message9'] = ' - The order does not exist';

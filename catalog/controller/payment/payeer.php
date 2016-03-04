@@ -39,6 +39,8 @@ class ControllerPaymentPayeer extends Controller
 
 	public function status()
 	{
+		$err = false;
+		$message = '';
 		$request = $this->request->post;
 		$this->load->language('payment/payeer');
 		
@@ -64,10 +66,9 @@ class ControllerPaymentPayeer extends Controller
 			{
 				file_put_contents($_SERVER['DOCUMENT_ROOT'] . $this->config->get('payeer_log_value'), $log_text, FILE_APPEND);
 			}
-			
-			
-			// вычисление цифровой подписи
-			
+
+			// проверка цифровой подписи и ip
+
 			$sign_hash = strtoupper(hash('sha256', implode(":", array(
 				$request['m_operation_id'],
 				$request['m_operation_ps'],
@@ -81,9 +82,6 @@ class ControllerPaymentPayeer extends Controller
 				$request['m_status'],
 				$this->config->get('payeer_security')
 			))));
-			
-			
-			// подлинность ip адреса
 			
 			$valid_ip = true;
 			$list_ip_str = str_replace(' ', '', $this->config->get('payeer_list_ip'));
@@ -99,9 +97,9 @@ class ControllerPaymentPayeer extends Controller
 				{
 					$ip_field[$i] = explode('.', $ip);
 					if ((($this_ip_field[0] ==  $ip_field[$i][0]) || ($ip_field[$i][0] == '*')) &&
-						(($this_ip_field[1] ==  $ip_field[$i][1]) || ($ip_field[$i][1] == '*')) &&
-						(($this_ip_field[2] ==  $ip_field[$i][2]) || ($ip_field[$i][2] == '*')) &&
-						(($this_ip_field[3] ==  $ip_field[$i][3]) || ($ip_field[$i][3] == '*')))
+					(($this_ip_field[1] ==  $ip_field[$i][1]) || ($ip_field[$i][1] == '*')) &&
+					(($this_ip_field[2] ==  $ip_field[$i][2]) || ($ip_field[$i][2] == '*')) &&
+					(($this_ip_field[3] ==  $ip_field[$i][3]) || ($ip_field[$i][3] == '*')))
 					{
 						$valid_ip = true;
 						break;
@@ -110,123 +108,104 @@ class ControllerPaymentPayeer extends Controller
 				}
 			}
 			
-			
-			// проверка цифровой подписи и ip
-		
-			if (!($request['m_sign'] == $sign_hash && $valid_ip))
+			if (!$valid_ip)
 			{
-				if ($this->config->get('payeer_admin_email') !== '')
-				{
-					$message = $this->language->get('text_email_message1') . "\n\n";
-					
-					if (!$valid_ip)
-					{
-						$message .= $this->language->get('text_email_message4') . "\n" . 
-									$this->language->get('text_email_message5') . $this->config->get('payeer_list_ip') . "\n" . 
-									$this->language->get('text_email_message6') . $_SERVER['REMOTE_ADDR'] . "\n";
-					}
-					
-					if ($request["m_sign"] != $sign_hash)
-					{
-						$message .= $this->language->get('text_email_message2') . "\n";
-					}
-					
-					$message .= "\n" . $log_text;
-					$headers = "From: no-reply@" . $_SERVER['HTTP_HOST'] . "\r\n" . 
-								"Content-type: text/plain; charset=utf-8 \r\n";
-						
-					mail($this->config->get('payeer_admin_email'), $this->language->get('text_email_subject'), $message, $headers);
-				}
+				$message .= $this->language->get('text_email_message4') . "\n" . 
+				$this->language->get('text_email_message5') . $this->config->get('payeer_list_ip') . "\n" . 
+				$this->language->get('text_email_message6') . $_SERVER['REMOTE_ADDR'] . "\n";
+				$err = true;
+			}
 
-				echo $request['m_orderid'] . '|error';
-				return true;
-			}
-			
-			
-			// загрузка заказа
-			
-			$this->load->model('checkout/order');
-			$order = $this->model_checkout_order->getOrder($request['m_orderid']);
-			
-			if (!$order)
+			if ($request["m_sign"] != $sign_hash)
 			{
-				echo $request['m_orderid'] . '|error';
-				return true;
+				$message .= $this->language->get('text_email_message2') . "\n";
+				$err = true;
 			}
-			
-			$order_curr = ($order['currency_code'] == 'RUR') ? 'RUB' : $order['currency_code'];
-			$order_amount = number_format($order['total'], 2, '.', '');
-			
-			
-			// проверка суммы и валюты
-			
-			if (!($request['m_amount'] == $order_amount && $request['m_curr'] == $order_curr))
+
+			if (!$err)
 			{
-				if ($this->config->get('payeer_admin_email') !== '')
+				// загрузка заказа
+				
+				$this->load->model('checkout/order');
+				$order = $this->model_checkout_order->getOrder($request['m_orderid']);
+				
+				if (!$order)
 				{
-					$message = $this->language->get('text_email_message1') . "\n\n";
+					$message .= $this->language->get('text_email_message9') . "\n";
+					$err = true;
+				}
+				else
+				{
+					$order_curr = ($order['currency_code'] == 'RUR') ? 'RUB' : $order['currency_code'];
+					$order_amount = number_format($order['total'], 2, '.', '');
 					
+					// проверка суммы и валюты
+				
 					if ($request['m_amount'] != $order_amount)
 					{
 						$message .= $this->language->get('text_email_message7') . "\n";
+						$err = true;
 					}
-					
+
 					if ($request['m_curr'] != $order_curr)
 					{
 						$message .= $this->language->get('text_email_message8') . "\n";
+						$err = true;
 					}
 					
-					$message .= "\n" . $log_text;
-					$headers = "From: no-reply@" . $_SERVER['HTTP_HOST'] . "\r\n" . 
-								"Content-type: text/plain; charset=utf-8 \r\n";
-						
-					mail($this->config->get('payeer_admin_email'), $this->language->get('text_email_subject'), $message, $headers);
+					// проверка статуса
+					
+					if (!$err)
+					{
+						switch ($request['m_status'])
+						{
+							case 'success':
+								if ($order['order_status_id'] !== $this->config->get('payeer_order_success_id'))
+								{
+									$this->model_checkout_order->addOrderHistory($request['m_orderid'], $this->config->get('payeer_order_success_id'));
+								}
+								break;
+								
+							default:
+								if ($order['order_status_id'] !== $this->config->get('payeer_order_fail_id'))
+								{
+									$message .= $this->language->get('text_email_message3') . "\n";
+									$this->model_checkout_order->addOrderHistory($request['m_orderid'], $this->config->get('payeer_order_fail_id'));
+									$err = true;
+								}
+								break;
+						}
+					}
 				}
-
-				echo $request['m_orderid'] . '|error';
-				return true;
 			}
 			
+			$data['order_id'] = $request['m_orderid'];
 			
-			// проверка статуса
-			
-			switch ($request['m_status'])
+			if ($err)
 			{
-				case 'success':
-					if ($order['order_status_id'] != $this->config->get('payeer_order_success_id'))
-					{
-						$this->model_checkout_order->addOrderHistory($request['m_orderid'], $this->config->get('payeer_order_success_id'));
-						echo $request['m_orderid'] . '|success';
-					}
-					return true;
-					break;
-					
-				case 'fail':
-					if ($order['order_status_id'] != $this->config->get('payeer_order_fail_id'))
-					{
-						if ($this->config->get('payeer_admin_email') !== '')
-						{
-							$message = $this->language->get('text_email_message1') . "\n\n" . 
-										$this->language->get('text_email_message3') . "\n\n" . 
-										$log_text;
+				$data['order_status'] = 'error';
+				$to = $this->config->get('payeer_admin_email');
 
-							$headers = "From: no-reply@" . $_SERVER['HTTP_HOST'] . "\r\n" . 
-										"Content-type: text/plain; charset=utf-8 \r\n";
+				if (!empty($to))
+				{
+					$message = $this->language->get('text_email_message1') . "\n\n" . $message . "\n" . $log_text;
+					$headers = "From: no-reply@" . $_SERVER['HTTP_HOST'] . "\r\n" . 
+					"Content-type: text/plain; charset=utf-8 \r\n";
+					mail($to, $this->language->get('text_email_subject'), $message, $headers);
+				}
+			}
+			else
+			{
+				$data['order_status'] = 'success';
+			}
 
-							mail($this->config->get('payeer_admin_email'), $this->language->get('text_email_subject'), $message, $headers);
-						}
-						
-						$this->model_checkout_order->addOrderHistory($request['m_orderid'], $this->config->get('payeer_order_fail_id'));
-					
-						echo $request['m_orderid'] . '|error';
-					}
-					return true;
-					break;
-					
-				default: 
-					echo $request['m_orderid'] . '|error';
-					return true;
-					break;
+			if (file_exists(DIR_TEMPLATE . $this->config->get('config_template') . '/template/payment/payeer_status.tpl')) 
+			{
+				$this->response->setOutput($this->load->view($this->config->get('config_template') . '/template/payment/payeer_status.tpl', $data));
+			}
+			else 
+			{
+				$this->response->setOutput($this->load->view('default/template/payment/payeer_status.tpl', $data));
 			}
 		}
    	}

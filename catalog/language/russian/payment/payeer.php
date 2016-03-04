@@ -10,3 +10,4 @@ $_['text_email_message5'] = '   доверенные IP: ';
 $_['text_email_message6'] = '   IP текущего сервера: ';
 $_['text_email_message7'] = ' - Неправильная сумма';
 $_['text_email_message8'] = ' - Неправильная валюта';
+$_['text_email_message9'] = ' - Заказ не существует';
