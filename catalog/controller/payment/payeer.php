@@ -109,7 +109,7 @@ class ControllerPaymentPayeer extends Controller
 				$err = true;
 			}
 
-			if ($request["m_sign"] != $sign_hash)
+			if ($request['m_sign'] != $sign_hash)
 			{
 				$message .= $this->language->get('text_email_message2') . "\n";
 				$err = true;
