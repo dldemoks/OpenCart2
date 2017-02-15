@@ -207,7 +207,7 @@ class ControllerPaymentpayeer extends Controller {
 		
 		if (isset($this->request->post['payeer_order_fail_id'])) 
 		{
-			$data['payeer_order_success_id'] = $this->request->post['payeer_order_fail_id'];
+			$data['payeer_order_fail_id'] = $this->request->post['payeer_order_fail_id'];
 		}
 		else 
 		{
